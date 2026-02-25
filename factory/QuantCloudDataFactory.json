@@ -1,0 +1,9 @@
+{
+	"name": "QuantCloudDataFactory",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4bd9ec10-7ff3-446a-b142-a0d0a556e43b",
+		"tenantId": "dce8d20f-0f55-4e99-aa2f-977b3b82ce5b"
+	}
+}
