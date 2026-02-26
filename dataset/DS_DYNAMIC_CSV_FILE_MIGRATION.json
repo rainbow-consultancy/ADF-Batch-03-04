@@ -1,0 +1,29 @@
+{
+	"name": "DS_DYNAMIC_CSV_FILE_MIGRATION",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS_CSV",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ADLS_DATASETS"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze-container"
+			}
+		}
+	}
+}
