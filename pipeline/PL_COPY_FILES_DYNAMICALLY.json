@@ -72,7 +72,8 @@
 						"value": "@activity('FilterCsvFiles').output.Value",
 						"type": "Expression"
 					},
-					"isSequential": true,
+					"isSequential": false,
+					"batchCount": 5,
 					"activities": [
 						{
 							"name": "CopyDynamicCsvFile",
