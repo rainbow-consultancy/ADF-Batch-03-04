@@ -24,6 +24,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -128,44 +129,6 @@
 									}
 								}
 							]
-						},
-						{
-							"name": "DeleteDynamicCsvFile",
-							"type": "Delete",
-							"dependsOn": [
-								{
-									"activity": "CopyDynamicCsvFile",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"dataset": {
-									"referenceName": "DS_DYNAMIC_CSV_FILE_MIGRATION",
-									"type": "DatasetReference",
-									"parameters": {
-										"FileName": {
-											"value": "@item().name",
-											"type": "Expression"
-										}
-									}
-								},
-								"enableLogging": false,
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								}
-							}
 						}
 					]
 				}
