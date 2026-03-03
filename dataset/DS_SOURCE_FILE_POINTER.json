@@ -1,0 +1,29 @@
+{
+	"name": "DS_SOURCE_FILE_POINTER",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS_CSV",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SrcFileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ADLS_DATASETS"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().SrcFileName",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze-container"
+			}
+		}
+	}
+}
