@@ -146,41 +146,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "DeleteSuccessTxtFile",
-				"type": "Delete",
-				"dependsOn": [
-					{
-						"activity": "ForEachFile",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "DS_BINARY_SOURCE_EVNT",
-						"type": "DatasetReference",
-						"parameters": {
-							"SourceFileName": "success.txt"
-						}
-					},
-					"enableLogging": false,
-					"storeSettings": {
-						"type": "AzureBlobFSReadSettings",
-						"recursive": true,
-						"enablePartitionDiscovery": false
-					}
-				}
 			}
 		],
 		"parameters": {
