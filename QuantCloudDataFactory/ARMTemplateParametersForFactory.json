@@ -22,6 +22,12 @@
 		},
 		"LS_AZURE_SQL_DATABASE_properties_typeProperties_userName": {
 			"value": "QuantCloud"
+		},
+		"MyEventBasedTrigger_properties_PL_EVENT_BASED_MIGRATION_parameters_FileName": {
+			"value": "@triggerBody().fileName"
+		},
+		"MyEventBasedTrigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
 		}
 	}
 }
