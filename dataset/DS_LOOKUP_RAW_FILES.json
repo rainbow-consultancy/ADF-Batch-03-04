@@ -1,0 +1,18 @@
+{
+	"name": "DS_LOOKUP_RAW_FILES",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS_CSV",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "RawFiles",
+				"fileSystem": "bronze-container"
+			}
+		}
+	}
+}
