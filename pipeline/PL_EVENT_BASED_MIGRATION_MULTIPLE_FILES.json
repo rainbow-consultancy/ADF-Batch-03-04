@@ -64,40 +64,26 @@
 							"userProperties": [],
 							"typeProperties": {
 								"source": {
-									"type": "DelimitedTextSource",
+									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
-										"enablePartitionDiscovery": false
+										"recursive": true
 									},
 									"formatSettings": {
-										"type": "DelimitedTextReadSettings"
+										"type": "BinaryReadSettings"
 									}
 								},
 								"sink": {
-									"type": "DelimitedTextSink",
+									"type": "BinarySink",
 									"storeSettings": {
 										"type": "AzureBlobFSWriteSettings"
-									},
-									"formatSettings": {
-										"type": "DelimitedTextWriteSettings",
-										"quoteAllText": true,
-										"fileExtension": ".txt"
 									}
 								},
-								"enableStaging": false,
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
+								"enableStaging": false
 							},
 							"inputs": [
 								{
-									"referenceName": "DS_SOURCE_CSV",
+									"referenceName": "DS_BINARY_SOURCE_EVNT",
 									"type": "DatasetReference",
 									"parameters": {
 										"SourceFileName": {
@@ -109,7 +95,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "DS_TARGET_CSV",
+									"referenceName": "DS_BINARY_TARGET_EVNT",
 									"type": "DatasetReference",
 									"parameters": {
 										"TargetFileName": {
