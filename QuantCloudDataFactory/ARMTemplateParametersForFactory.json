@@ -30,7 +30,7 @@
 			"value": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
 		},
 		"MyEventBasedTriggerPart-2_properties_PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES_parameters_FileName": {
-			"value": "@triggerBody.fileName"
+			"value": "@triggerBody().fileName"
 		},
 		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
 			"value": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"

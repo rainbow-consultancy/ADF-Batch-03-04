@@ -41,7 +41,7 @@
 		},
 		"MyEventBasedTriggerPart-2_properties_PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES_parameters_FileName": {
 			"type": "string",
-			"defaultValue": "@triggerBody.fileName"
+			"defaultValue": "@triggerBody().fileName"
 		},
 		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
 			"type": "string",
