@@ -39,6 +39,14 @@
 			"type": "string",
 			"defaultValue": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
 		},
+		"MyEventBasedTriggerPart-2_properties_PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES_parameters_FileName": {
+			"type": "string",
+			"defaultValue": "@triggerBody.fileName"
+		},
+		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -83,16 +91,42 @@
 					},
 					"LS_AZURE_SQL_DATABASE_properties_typeProperties_userName": {
 						"value": "[parameters('LS_AZURE_SQL_DATABASE_properties_typeProperties_userName')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "QuantCloudDataFactory_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
 					},
 					"MyEventBasedTrigger_properties_PL_EVENT_BASED_MIGRATION_parameters_FileName": {
 						"value": "[parameters('MyEventBasedTrigger_properties_PL_EVENT_BASED_MIGRATION_parameters_FileName')]"
 					},
 					"MyEventBasedTrigger_properties_typeProperties_scope": {
 						"value": "[parameters('MyEventBasedTrigger_properties_typeProperties_scope')]"
+					},
+					"MyEventBasedTriggerPart-2_properties_PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES_parameters_FileName": {
+						"value": "[parameters('MyEventBasedTriggerPart-2_properties_PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES_parameters_FileName')]"
+					},
+					"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
+						"value": "[parameters('MyEventBasedTriggerPart-2_properties_typeProperties_scope')]"
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'QuantCloudDataFactory_ArmTemplate_0')]"
+			]
 		}
 	]
 }
