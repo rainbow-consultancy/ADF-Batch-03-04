@@ -127,11 +127,11 @@
 							"userProperties": [],
 							"typeProperties": {
 								"dataset": {
-									"referenceName": "DS_SOURCE_CSV",
+									"referenceName": "DS_BINARY_SOURCE_EVNT",
 									"type": "DatasetReference",
 									"parameters": {
 										"SourceFileName": {
-											"value": "@pipeline().parameters.FileName",
+											"value": "@item().name",
 											"type": "Expression"
 										}
 									}
@@ -145,6 +145,41 @@
 							}
 						}
 					]
+				}
+			},
+			{
+				"name": "DeleteSuccessTxtFile",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "ForEachFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_BINARY_SOURCE_EVNT",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFileName": "success.txt"
+						}
+					},
+					"enableLogging": true,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
 				}
 			}
 		],
