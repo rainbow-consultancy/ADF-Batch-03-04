@@ -49,14 +49,26 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DS_TARGET_CSV",
-						"type": "DatasetReference"
+						"referenceName": "DS_SOURCE_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "DS_CSV_TARGET",
-						"type": "DatasetReference"
+						"referenceName": "DS_TARGET_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"TargetFileName": {
+								"value": "@pipeline().parameters.FileName",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
