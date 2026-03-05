@@ -704,6 +704,44 @@
 								}
 							}
 						]
+					},
+					{
+						"name": "DeleteFile",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "CopyFiles",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_SOURCE_CSV",
+								"type": "DatasetReference",
+								"parameters": {
+									"SourceFileName": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									}
+								}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
 					}
 				],
 				"policy": {
