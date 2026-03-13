@@ -13,7 +13,8 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "bihar_election_results.csv",
+				"fileName": "apple_global_sales_dataset.csv",
+				"folderPath": "csv",
 				"fileSystem": "bronze-container"
 			},
 			"columnDelimiter": ",",
