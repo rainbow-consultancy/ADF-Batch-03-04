@@ -70,12 +70,14 @@
 									"partitionOption": "None"
 								},
 								"sink": {
-									"type": "ParquetSink",
+									"type": "DelimitedTextSink",
 									"storeSettings": {
 										"type": "AzureBlobFSWriteSettings"
 									},
 									"formatSettings": {
-										"type": "ParquetWriteSettings"
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
 									}
 								},
 								"enableStaging": false,
@@ -106,7 +108,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "DS_ONPREM_SQL_TO_ADLS",
+									"referenceName": "DS_ONPREM_TO_ADLS",
 									"type": "DatasetReference",
 									"parameters": {
 										"Folder": {
