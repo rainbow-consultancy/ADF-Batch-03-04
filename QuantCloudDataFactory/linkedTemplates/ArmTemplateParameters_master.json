@@ -26,6 +26,15 @@
 		"LS_AZURE_SQL_DATABASE_properties_typeProperties_userName": {
 			"value": "QuantCloud"
 		},
+		"LS_OnPremSqlServer_properties_typeProperties_server": {
+			"value": "SandeepReddy"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_database": {
+			"value": "AdventureWorks"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_userName": {
+			"value": "quant_user"
+		},
 		"MyEventBasedTrigger_properties_PL_EVENT_BASED_MIGRATION_parameters_FileName": {
 			"value": "@triggerBody().fileName"
 		},
@@ -37,15 +46,6 @@
 		},
 		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
 			"value": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
-		},
-		"LS_OnPremSqlServer_properties_typeProperties_server": {
-			"value": "SandeepReddy"
-		},
-		"LS_OnPremSqlServer_properties_typeProperties_database": {
-			"value": "AdventureWorks"
-		},
-		"LS_OnPremSqlServer_properties_typeProperties_userName": {
-			"value": "quant_user"
 		},
 		"containerUri": {
 			"value": ""
