@@ -11,6 +11,9 @@
 		"LS_AZURE_SQL_DATABASE_password": {
 			"value": ""
 		},
+		"LS_OnPremSqlServer_password": {
+			"value": ""
+		},
 		"LS_ADLS_CSV_properties_typeProperties_url": {
 			"value": "https://rainbowstorageadls.dfs.core.windows.net/"
 		},
@@ -34,6 +37,15 @@
 		},
 		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
 			"value": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_server": {
+			"value": "SandeepReddy"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_database": {
+			"value": "AdventureWorks"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_userName": {
+			"value": "quant_user"
 		},
 		"containerUri": {
 			"value": ""

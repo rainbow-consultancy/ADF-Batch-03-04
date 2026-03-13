@@ -15,6 +15,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'LS_AZURE_SQL_DATABASE'"
 		},
+		"LS_OnPremSqlServer_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_OnPremSqlServer'"
+		},
 		"LS_ADLS_CSV_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://rainbowstorageadls.dfs.core.windows.net/"
@@ -46,6 +50,18 @@
 		"MyEventBasedTriggerPart-2_properties_typeProperties_scope": {
 			"type": "string",
 			"defaultValue": "/subscriptions/55a823ff-3572-4afe-84f3-2631597109ef/resourceGroups/rg_rainbow/providers/Microsoft.Storage/storageAccounts/rainbowstorageadls"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "SandeepReddy"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "AdventureWorks"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "quant_user"
 		}
 	},
 	"variables": {
@@ -768,6 +784,176 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GetMetadataInfo",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_LOOKUP_RAW_FILES",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEachFile",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "GetMetadataInfo",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('GetMetadataInfo').output.childItems",
+								"type": "Expression"
+							},
+							"batchCount": 40,
+							"activities": [
+								{
+									"name": "CopyFiles",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_BINARY_SOURCE_EVNT",
+											"type": "DatasetReference",
+											"parameters": {
+												"SourceFileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_BINARY_TARGET_EVNT",
+											"type": "DatasetReference",
+											"parameters": {
+												"TargetFileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "DeleteFile",
+									"type": "Delete",
+									"dependsOn": [
+										{
+											"activity": "CopyFiles",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "DS_BINARY_SOURCE_EVNT",
+											"type": "DatasetReference",
+											"parameters": {
+												"SourceFileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_LOOKUP_RAW_FILES')]",
+				"[concat(variables('factoryId'), '/datasets/DS_BINARY_SOURCE_EVNT')]",
+				"[concat(variables('factoryId'), '/datasets/DS_BINARY_TARGET_EVNT')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/PL_SQL_TO_ADLS')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1214,6 +1400,76 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DS_BINARY_SOURCE_EVNT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SourceFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ADLS_DATASETS"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().SourceFileName",
+							"type": "Expression"
+						},
+						"folderPath": "RawFiles",
+						"fileSystem": "bronze-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_BINARY_TARGET_EVNT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TargetFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ADLS_DATASETS"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TargetFileName",
+							"type": "Expression"
+						},
+						"folderPath": "Processed",
+						"fileSystem": "bronze-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DS_CSV_TARGET')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1331,6 +1587,29 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileSystem": "bronze-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_LOOKUP_RAW_FILES')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "RawFiles",
 						"fileSystem": "bronze-container"
 					}
 				}
@@ -1673,198 +1952,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "GetMetadataInfo",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "DS_LOOKUP_RAW_FILES",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "BinaryReadSettings"
-							}
-						}
-					},
-					{
-						"name": "ForEachFile",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "GetMetadataInfo",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('GetMetadataInfo').output.childItems",
-								"type": "Expression"
-							},
-							"batchCount": 40,
-							"activities": [
-								{
-									"name": "CopyFiles",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "DS_BINARY_SOURCE_EVNT",
-											"type": "DatasetReference",
-											"parameters": {
-												"SourceFileName": {
-													"value": "@item().name",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "DS_BINARY_TARGET_EVNT",
-											"type": "DatasetReference",
-											"parameters": {
-												"TargetFileName": {
-													"value": "@item().name",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								},
-								{
-									"name": "DeleteFile",
-									"type": "Delete",
-									"dependsOn": [
-										{
-											"activity": "CopyFiles",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"dataset": {
-											"referenceName": "DS_BINARY_SOURCE_EVNT",
-											"type": "DatasetReference",
-											"parameters": {
-												"SourceFileName": {
-													"value": "@item().name",
-													"type": "Expression"
-												}
-											}
-										},
-										"enableLogging": false,
-										"storeSettings": {
-											"type": "AzureBlobFSReadSettings",
-											"recursive": true,
-											"enablePartitionDiscovery": false
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"FileName": {
-						"type": "string"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_LOOKUP_RAW_FILES')]",
-				"[concat(variables('factoryId'), '/datasets/DS_BINARY_SOURCE_EVNT')]",
-				"[concat(variables('factoryId'), '/datasets/DS_BINARY_TARGET_EVNT')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_LOOKUP_RAW_FILES')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_ADLS_CSV",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "Binary",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": "RawFiles",
-						"fileSystem": "bronze-container"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/MyEventBasedTriggerPart-2')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -1898,42 +1985,221 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_BINARY_SOURCE_EVNT')]",
+			"name": "[concat(parameters('factoryName'), '/IR-SelfHosted-OnPrem')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_OnPremSqlServer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"server": "[parameters('LS_OnPremSqlServer_properties_typeProperties_server')]",
+					"database": "[parameters('LS_OnPremSqlServer_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": true,
+					"authenticationType": "SQL",
+					"userName": "[parameters('LS_OnPremSqlServer_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LS_OnPremSqlServer_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "IR-SelfHosted-OnPrem",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/IR-SelfHosted-OnPrem')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_ONPREM_DATA_MIGRATION')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LookUpInfo",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES\nWHERE TABLE_TYPE = 'BASE TABLE';",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_ONPREM_SQL",
+								"type": "DatasetReference",
+								"parameters": {
+									"Schema": "''",
+									"Table": "''"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEachTable",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "LookUpInfo",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('LookUpInfo').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 20,
+							"activities": [
+								{
+									"name": "CopySqlTable",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_ONPREM_SQL",
+											"type": "DatasetReference",
+											"parameters": {
+												"Schema": {
+													"value": "@item().TABLE_SCHEMA",
+													"type": "Expression"
+												},
+												"Table": {
+													"value": "@item().TABLE_NAME",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_ONPREM_TO_ADLS",
+											"type": "DatasetReference",
+											"parameters": {
+												"Folder": {
+													"value": "@item().TABLE_SCHEMA",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item().TABLE_NAME), formatDateTime(utcNow(), 'yyyyMMdd'))",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_ONPREM_SQL')]",
+				"[concat(variables('factoryId'), '/datasets/DS_ONPREM_TO_ADLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ONPREM_SQL')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "LS_ADLS_CSV",
+					"referenceName": "LS_OnPremSqlServer",
 					"type": "LinkedServiceReference"
 				},
 				"parameters": {
-					"SourceFileName": {
+					"Schema": {
+						"type": "string"
+					},
+					"Table": {
 						"type": "string"
 					}
 				},
-				"folder": {
-					"name": "ADLS_DATASETS"
-				},
 				"annotations": [],
-				"type": "Binary",
+				"type": "SqlServerTable",
+				"schema": [],
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@dataset().SourceFileName",
-							"type": "Expression"
-						},
-						"folderPath": "RawFiles",
-						"fileSystem": "bronze-container"
+					"schema": {
+						"value": "@dataset().Schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().Table",
+						"type": "Expression"
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_OnPremSqlServer')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_BINARY_TARGET_EVNT')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ONPREM_TO_ADLS')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1942,26 +2208,34 @@
 					"type": "LinkedServiceReference"
 				},
 				"parameters": {
-					"TargetFileName": {
+					"Folder": {
+						"type": "string"
+					},
+					"FileName": {
 						"type": "string"
 					}
 				},
-				"folder": {
-					"name": "ADLS_DATASETS"
-				},
 				"annotations": [],
-				"type": "Binary",
+				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": {
-							"value": "@dataset().TargetFileName",
+							"value": "@dataset().FileName",
 							"type": "Expression"
 						},
-						"folderPath": "Processed",
+						"folderPath": {
+							"value": "@dataset().Folder",
+							"type": "Expression"
+						},
 						"fileSystem": "bronze-container"
-					}
-				}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS_CSV')]"
