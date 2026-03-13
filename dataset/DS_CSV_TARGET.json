@@ -13,7 +13,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "bihar_election_results.csv",
+				"fileName": "apple_sales_filtered",
 				"folderPath": "ProcessedFiles",
 				"fileSystem": "bronze-container"
 			},
