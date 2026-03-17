@@ -7,6 +7,22 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "QuantCloudDataFactory"
 		},
+		"LS_OnPremSqlServer_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LS_OnPremSqlServer'"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "SandeepReddy"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "AdventureWorks"
+		},
+		"LS_OnPremSqlServer_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "quant_user"
+		},
 		"MyEventBasedTrigger_properties_PL_EVENT_BASED_MIGRATION_parameters_FileName": {
 			"type": "string",
 			"defaultValue": "@triggerBody().fileName"
@@ -28,6 +44,345 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_TARGET_CSV')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TargetFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ADLS_DATASETS"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TargetFileName",
+							"type": "Expression"
+						},
+						"folderPath": "Processed",
+						"fileSystem": "bronze-container"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_TARGET_FILE_POINTER')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TrgFileName": {
+						"type": "string"
+					},
+					"TrgFolderName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ADLS_DATASETS"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TrgFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().TrgFolderName",
+							"type": "Expression"
+						},
+						"fileSystem": "bronze-container"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_TOP_CUSTOMERS_CSV_OUTPUT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS_CSV",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "top_customers",
+						"folderPath": "DataFlows",
+						"fileSystem": "bronze-container"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_OnPremSqlServer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"server": "[parameters('LS_OnPremSqlServer_properties_typeProperties_server')]",
+					"database": "[parameters('LS_OnPremSqlServer_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": true,
+					"authenticationType": "SQL",
+					"userName": "[parameters('LS_OnPremSqlServer_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LS_OnPremSqlServer_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "IR-SelfHosted-OnPrem",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_COPY_ACTIVITY')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyCsvFileToAdls",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Constituency Number",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ConstituencyNumber",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Constituency Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ConstituencyName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Serial Number",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "SerialNumber",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Candidate Name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CandidateName",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Party",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Party",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "EVM Votes",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "EVMVotes",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Postal Votes",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "PostalVotes",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Total Votes",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "TotalVotes",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Vote Percentage",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "VotePercentage",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_READ_CSV",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_CSV_TARGET",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "DeleteFile",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "CopyCsvFileToAdls",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_READ_CSV",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/PL_COPY_FILES_DYNAMICALLY')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -391,7 +746,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_TARGET_FILE_POINTER')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/PL_EVENT_BASED_MIGRATION')]",
@@ -518,7 +875,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_TARGET_CSV')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/PL_EVENT_BASED_MIGRATION_MULTIPLE_FILES')]",
@@ -1123,7 +1482,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_TARGET_FILE_POINTER')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/DS_ONPREM_SQL')]",
@@ -1156,7 +1517,9 @@
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_OnPremSqlServer')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/DF_FILTER')]",
@@ -1205,6 +1568,182 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_TOP_CUSTOMERS')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_SQL_DATASET_CUSTOMERS",
+								"type": "DatasetReference"
+							},
+							"name": "Customers"
+						},
+						{
+							"dataset": {
+								"referenceName": "DS_SQL_DATASETS_ORDERS",
+								"type": "DatasetReference"
+							},
+							"name": "OrdersHeader"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_TOP_CUSTOMERS_CSV_OUTPUT",
+								"type": "DatasetReference"
+							},
+							"name": "sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "CustomerDataset"
+						},
+						{
+							"name": "CustomerUpdated"
+						},
+						{
+							"name": "CustomerFinal"
+						},
+						{
+							"name": "OrdersFinal"
+						},
+						{
+							"name": "JoinCustomerOrder"
+						},
+						{
+							"name": "JoinedDataset"
+						},
+						{
+							"name": "rank"
+						},
+						{
+							"name": "FilterRanks"
+						},
+						{
+							"name": "FinalDataset"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          NameStyle as boolean,",
+						"          Title as string,",
+						"          FirstName as string,",
+						"          MiddleName as string,",
+						"          LastName as string,",
+						"          Suffix as string,",
+						"          CompanyName as string,",
+						"          SalesPerson as string,",
+						"          EmailAddress as string,",
+						"          Phone as string,",
+						"          PasswordHash as string,",
+						"          PasswordSalt as string,",
+						"          rowguid as string,",
+						"          ModifiedDate as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> Customers",
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          RevisionNumber as integer,",
+						"          OrderDate as timestamp,",
+						"          DueDate as timestamp,",
+						"          ShipDate as timestamp,",
+						"          Status as integer,",
+						"          OnlineOrderFlag as boolean,",
+						"          SalesOrderNumber as string,",
+						"          PurchaseOrderNumber as string,",
+						"          AccountNumber as string,",
+						"          CustomerID as integer,",
+						"          ShipToAddressID as integer,",
+						"          BillToAddressID as integer,",
+						"          ShipMethod as string,",
+						"          CreditCardApprovalCode as string,",
+						"          SubTotal as decimal(19,4),",
+						"          TaxAmt as decimal(19,4),",
+						"          Freight as decimal(19,4),",
+						"          TotalDue as decimal(19,4),",
+						"          Comment as string,",
+						"          rowguid as string,",
+						"          ModifiedDate as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> OrdersHeader",
+						"Customers select(mapColumn(",
+						"          CustomerID,",
+						"          FirstName,",
+						"          MiddleName,",
+						"          LastName,",
+						"          Phone",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> CustomerDataset",
+						"CustomerDataset derive(FullName = concatWS(' ', FirstName, MiddleName, LastName)) ~> CustomerUpdated",
+						"CustomerUpdated select(mapColumn(",
+						"          CustomerID,",
+						"          FullName,",
+						"          Phone",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> CustomerFinal",
+						"OrdersHeader select(mapColumn(",
+						"          CustomerID,",
+						"          TotalDue",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> OrdersFinal",
+						"CustomerFinal, OrdersFinal join(CustomerFinal@CustomerID == OrdersFinal@CustomerID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinCustomerOrder",
+						"JoinCustomerOrder select(mapColumn(",
+						"          CustomerID = CustomerFinal@CustomerID,",
+						"          FullName,",
+						"          Phone,",
+						"          TotalDue",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> JoinedDataset",
+						"JoinedDataset rank(desc(TotalDue, true),",
+						"     output(rank as long),",
+						"     dense: true) ~> rank",
+						"rank filter(rank < 11) ~> FilterRanks",
+						"FilterRanks select(mapColumn(",
+						"          CustomerID,",
+						"          FullName,",
+						"          Phone,",
+						"          TotalDue",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> FinalDataset",
+						"FinalDataset sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['top_customers'],",
+						"     truncate: true,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_TOP_CUSTOMERS_CSV_OUTPUT')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/DataFlowTesting')]",
@@ -1393,6 +1932,56 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_ONPREM_SQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_TOP_CUTOMERS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "DataFlowTopCus",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_TOP_CUSTOMERS",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Customers": {},
+									"OrdersHeader": {},
+									"sink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_TOP_CUSTOMERS')]"
 			]
 		},
 		{
