@@ -157,6 +157,7 @@
 				"     skipDuplicateMapOutputs: true) ~> FinalDataset",
 				"FinalDataset sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     partitionFileNames:['top_customers'],",
 				"     truncate: true,",
 				"     umask: 0022,",
 				"     preCommands: [],",
